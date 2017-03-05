@@ -1,5 +1,5 @@
 # go to 'https://developers.facebook.com/tools/explorer' to get your access token
-access_token <- "******************* INPUT YOUR ACCESS TOKEN ******************************"
+access_token <- "EAACEdEose0cBAEoNfQFjrZAQFy6ZApdSHaZCVcazl50GhSwJsmhp6ZCu1VqlMl0FvolIicVEfNaqj0TmeyxHLLEKVZAV1yzdSElNHE2eaQ1szfCmWI1WP7FVL3HAdR4jU5DLqm07Ef37mxKxFZBDlhNnhAftWh5H7gq5ZAVPd2kHgnhj8YWU0wkVfBrZCIoXLG4ZD"
 
 require(RCurl)
 require(rjson)
